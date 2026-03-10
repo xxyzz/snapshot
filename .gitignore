@@ -1,0 +1,15 @@
+# emacs files
+*~
+.\#*
+\#*\#
+
+# python env
+.env
+env
+.venv
+
+# python
+__pycache__
+*.egg-info
+
+build
