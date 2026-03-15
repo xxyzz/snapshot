@@ -9,45 +9,59 @@ on:
   workflow_dispatch:
 
 jobs:
-  compress:
+  check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    strategy:
-      matrix:
-        gloss_lang: ["en"]
+    outputs:
+      need_update: ${{ steps.check-result.outputs.need_update }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: 3.14
       - run: python -m pip install .
-      - run: snap ${{ matrix.gloss_lang }}
+      - id: check-result
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.gloss_lang }}
-          if-no-files-found: error
-          path: |
-            build/*.zst
-            build/*.json
+        run: echo "need_update=$(snap check)" >> "$GITHUB_OUTPUT"
 
-  release:
-     needs: compress
-     runs-on: ubuntu-latest
-     permissions:
-       contents: write
-     steps:
-       - uses: actions/download-artifact@v8
-       - name: Get date
-         id: get-date
-         run: |
-           echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-       - uses: softprops/action-gh-release@v2
-         with:
-           tag_name: ${{ (github.event_name == 'push' && github.ref_name) || steps.get-date.outputs.date }}
-           files: |
-             **/*.zst
-             **/*.json
+  build:
+    needs: check
+    if: needs.check.outputs.need_update == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        edition: ["en", "es"]
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+
+      - name: Get date
+        id: get-date
+        run: echo "date=$(/bin/date -u "+%Y%m%d")" >> "$GITHUB_OUTPUT"
+
+      - name: Get tag
+        id: get-tag
+        run: echo "tag=${{ (github.event_name == 'push' && github.ref_name) || steps.get-date.outputs.date }}" >> $GITHUB_OUTPUT
+
+      - if: matrix.edition == 'en'
+        run: gh release create ${{ steps.get-tag.outputs.tag }} -d
+
+      - run: python -m pip install .
+      - run: snap build ${{ matrix.edition }}
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+
+      - run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json build/*.zst
+
+      - if: matrix.edition == 'en'
+        run: gh release edit ${{ steps.get-tag.outputs.tag }} --draft=false --latest

@@ -1,1 +1,1 @@
-NAMESPACES = {"en": [0]}
+NAMESPACES = {"en": [0], "es": [0]}

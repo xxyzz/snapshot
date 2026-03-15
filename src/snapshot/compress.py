@@ -6,7 +6,7 @@ def get_latest_release_date(identifier: str) -> str:
     import requests
 
     r = requests.get(
-        f"https://github.com/xxyzz/snapshot/latest/releases/{identifier}.json"
+        f"https://github.com/xxyzz/snapshot/releases/latest/download/{identifier}.json"
     )
     if r.ok:
         return r.json()["date"]
@@ -18,8 +18,8 @@ def is_newer_snapshot(current: str, last: str) -> bool:
 
     if last == "":
         return True
-    current_date = datetime.utcfromtimestamp(current)
-    last_date = datetime.utcfromtimestamp(last)
+    current_date = datetime.fromisoformat(current)
+    last_date = datetime.fromisoformat(last)
     return current_date > last_date
 
 
@@ -48,6 +48,6 @@ def compress_chunk(chunk_identifier: str, ndjson_path: Path):
     logger.info(f"{chunk_identifier} compress done")
 
 
-def create_json(identifier: str, date: str, chunks: list[str]):
+def create_json(identifier: str, date: str, chunks: int):
     with open(f"build/{identifier}.json", "w") as f:
         json.dump({"date": date, "chunks": chunks}, f)

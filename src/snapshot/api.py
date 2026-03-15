@@ -13,7 +13,7 @@ def get_access_token() -> str:
     return r.json()["access_token"]
 
 
-def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, list[str]]:
+def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, int]:
     import requests
 
     r = requests.get(
@@ -21,7 +21,7 @@ def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, list[s
         headers={"Authorization": f"Bearer {access_token}"},
     )
     data = r.json()
-    return data["date_modified"].split("T")[0], data["chunks"]
+    return data["date_modified"].split("T")[0], len(data["chunks"])
 
 
 def download_chunk(
@@ -60,3 +60,43 @@ def get_chunk_tar_path(chunk_identifier: str) -> Path:
 def get_chunk_ndjson_path(chunk_identifier: str) -> Path:
     filename = chunk_identifier[chunk_identifier.index("chunk_") :] + ".ndjson"
     return Path("build") / filename
+
+
+def edition_has_update(edition: str, access_token: str) -> bool:
+    from .compress import get_latest_release_date, is_newer_snapshot
+
+    identifier = f"{edition}wiktionary_namespace_0"
+    current_date, _ = get_snapshot_chunks(access_token, identifier)
+    last_date = get_latest_release_date(identifier)
+    return is_newer_snapshot(current_date, last_date)
+
+
+def check_update(args):
+    from .api import get_access_token
+    from .namespace import NAMESPACES
+
+    token = get_access_token()
+    if any(edition_has_update(edition, token) for edition in NAMESPACES.keys()):
+        print("true")
+    else:
+        print("false")
+
+
+def download_last_release(edition: str, ns_id: int):
+    from subprocess import run
+
+    Path("build").mkdir(exist_ok=True)
+    run(
+        [
+            "gh",
+            "release",
+            "download",
+            "-D",
+            "build",
+            "-p",
+            f"{edition}wiktionary_namespace_{ns_id}*",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
