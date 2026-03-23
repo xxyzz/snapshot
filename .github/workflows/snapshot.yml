@@ -36,6 +36,8 @@ jobs:
         edition: ['en', 'es', 'fr']
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      tag: ${{ steps.get-tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -61,5 +63,13 @@ jobs:
       - if: contains(fromJSON('["fr"]'), matrix.edition)
         run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
 
-      - if: matrix.edition == 'en'
-        run: gh release edit ${{ steps.get-tag.outputs.tag }} --draft=false --latest
+  release:
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - run: gh release edit ${{ needs.build.outputs.tag }} --draft=false --latest

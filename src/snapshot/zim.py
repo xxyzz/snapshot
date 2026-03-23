@@ -4,6 +4,7 @@ from libzim.writer import Item
 
 
 def download_kiwix_zim(lang_3: str) -> Path:
+    import subprocess
     import xml.etree.ElementTree as ET
 
     import requests
@@ -20,12 +21,9 @@ def download_kiwix_zim(lang_3: str) -> Path:
         .get("href")
         .removesuffix(".meta4")
     )
-    r = requests.get(url, stream=True)
     zim_path = Path(f"build/{url.rsplit('/', 1)[-1]}")
-    if not zim_path.exists():
-        with zim_path.open("wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
+    url += ".torrent"
+    subprocess.run(["aria2c", "-d", "build", "--seed-time", "0", url], check=True)
     return zim_path
 
 

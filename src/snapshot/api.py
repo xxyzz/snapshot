@@ -104,4 +104,4 @@ def download_last_release(patterns: list[str]):
     args = ["gh", "release", "download", "-D", "build"]
     for pattern in patterns:
         args.extend(["-p", pattern])
-    run(args, check=True, capture_output=True, text=True)
+    run(args, check=True)
