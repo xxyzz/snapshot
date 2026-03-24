@@ -13,7 +13,7 @@ def build(args):
     access_token = get_access_token()
     if edition_has_update(args.edition, access_token):
         if "kiwix" in EDITIONS[args.edition]:
-            create_zim(args.edition, access_token)
+            create_zim(args.edition)
         create_parsoid_files(args.edition, 0, access_token)
     else:
         patterns = [f"{args.edition}wiktionary_namespace_0*"]

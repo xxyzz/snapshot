@@ -13,6 +13,7 @@ license = { text = "GNU General Public License v3 or later (GPLv3+)" }
 dependencies = [
     "requests",
     "libzim",
+    "lxml",
 ]
 
 [project.optional-dependencies]

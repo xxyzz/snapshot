@@ -58,6 +58,7 @@ class MyItem(Item):
 def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
     from libzim.reader import Archive
     from libzim.writer import Hint
+    from lxml import etree, html
 
     kiwix_zim = Archive(kiwix_zim_path)
     for entry_id in range(kiwix_zim.all_entry_count):
@@ -65,8 +66,10 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
         if entry.title.startswith(ns_prefixes):
             if not entry.is_redirect:
                 item = entry.get_item()
+                doc = html.fromstring(bytes(item.content).decode("UTF-8"))
+                xml_string = etree.tostring(doc, encoding="UTF-8", method="xml")
                 zim_creator.add_item(
-                    MyItem(item.title, item.path, bytes(item.content), item.mimetype)
+                    MyItem(item.title, item.path, xml_string, item.mimetype)
                 )
             else:
                 target_entry = entry.get_redirect_entry()
@@ -84,7 +87,7 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
             )
 
 
-def create_zim(edition: str, access_token: str):
+def create_zim(edition: str):
     from datetime import UTC, datetime
     from importlib.resources import files
 
