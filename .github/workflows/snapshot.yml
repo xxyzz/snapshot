@@ -72,4 +72,5 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v6
       - run: gh release edit ${{ needs.build.outputs.tag }} --draft=false --latest
