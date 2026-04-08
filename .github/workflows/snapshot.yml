@@ -33,7 +33,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        edition: ['en', 'es', 'fr']
+        edition: ['en', 'es', 'fr', 'ru', 'de']
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
