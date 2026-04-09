@@ -60,7 +60,7 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
 
       - run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json build/*.zst
-      - if: contains(fromJSON('["fr"]'), matrix.edition)
+      - if: contains(fromJSON('["fr", "de"]'), matrix.edition)
         run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
 
   release:

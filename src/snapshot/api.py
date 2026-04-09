@@ -87,7 +87,6 @@ def edition_has_update(edition: str, access_token: str) -> bool:
 
 
 def check_update(args):
-    from .api import get_access_token
     from .edition import EDITIONS
 
     token = get_access_token()
