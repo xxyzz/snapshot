@@ -36,6 +36,7 @@ jobs:
         edition: ['en', 'es', 'fr', 'ru', 'de']
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TELEMETRY: false
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     steps:
@@ -71,6 +72,7 @@ jobs:
       contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TELEMETRY: false
     steps:
       - uses: actions/checkout@v6
       - run: gh release edit ${{ needs.build.outputs.tag }} --draft=false --latest
