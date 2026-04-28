@@ -39,7 +39,7 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     from .api import get_snapshot_chunks
 
     identifier = f"{edition}wiktionary_namespace_{ns_id}"
-    snapshot_date, chunks = get_snapshot_chunks(access_token, identifier)
+    snapshot_date, chunks, _ = get_snapshot_chunks(access_token, identifier)
     with open(f"build/{identifier}.json", "w") as f:
         json.dump({"date": snapshot_date, "chunks": chunks}, f)
     with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:

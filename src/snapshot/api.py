@@ -13,7 +13,7 @@ def get_access_token() -> str:
     return r.json()["access_token"]
 
 
-def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, int]:
+def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, int, int]:
     import requests
 
     r = requests.get(
@@ -21,7 +21,11 @@ def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, int]:
         headers={"Authorization": f"Bearer {access_token}"},
     )
     data = r.json()
-    return data["date_modified"].split("T")[0], len(data["chunks"])
+    return (
+        data["date_modified"].split("T")[0],
+        len(data["chunks"]),
+        data["size"]["value"],
+    )
 
 
 def download_chunk(access_token: str, snapshot_id: str, chunk_id: str) -> Path:
@@ -58,15 +62,15 @@ def get_chunk_ndjson_path(chunk_identifier: str) -> Path:
     return Path("build") / filename
 
 
-def get_latest_release_date(identifier: str) -> str:
+def get_latest_release_data(identifier: str) -> dict:
     import requests
 
     r = requests.get(
         f"https://github.com/xxyzz/snapshot/releases/latest/download/{identifier}.json"
     )
     if r.ok:
-        return r.json()["date"]
-    return ""
+        return r.json()
+    return {}
 
 
 def is_newer_snapshot(current: str, last: str) -> bool:
@@ -80,10 +84,29 @@ def is_newer_snapshot(current: str, last: str) -> bool:
 
 
 def edition_has_update(edition: str, access_token: str) -> bool:
+    from .main import logger
+
     identifier = f"{edition}wiktionary_namespace_0"
-    current_date, _ = get_snapshot_chunks(access_token, identifier)
-    last_date = get_latest_release_date(identifier)
-    return is_newer_snapshot(current_date, last_date)
+    current_date, current_chunks, current_size = get_snapshot_chunks(
+        access_token, identifier
+    )
+    last_release = get_latest_release_data(identifier)
+    last_date = last_release.get("date", "")
+    has_update = is_newer_snapshot(current_date, last_date)
+    if has_update:
+        last_chunks = last_release.get("chunks", 0)
+        if current_chunks < last_chunks:
+            logger.info(
+                f"{edition} edition chunks decrease: {last_date} has {last_chunks} "
+                f"chunks, {current_date} has {current_chunks} chunks"
+            )
+        last_size = last_release.get("size", 0)
+        if current_size < last_size:
+            logger.info(
+                f"{edition} edition size decrease: {last_date} is {last_size}MB, "
+                f"{current_date} is {current_size}MB"
+            )
+    return has_update
 
 
 def check_update(args):
