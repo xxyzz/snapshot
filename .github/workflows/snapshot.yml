@@ -5,7 +5,7 @@ on:
     tags:
       - '*'
   schedule:
-    - cron: '42 1 * * 0'
+    - cron: '42 1 5 * *'
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        edition: ['en', 'es', 'fr', 'ru', 'de']
+        edition: ['en', 'es', 'fr', 'ru', 'de', 'zh']
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TELEMETRY: false
