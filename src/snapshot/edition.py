@@ -5,4 +5,5 @@ EDITIONS = {
     "ru": {"lang": "rus", "parsoid": [0]},
     "de": {"lang": "deu", "parsoid": [0], "kiwix": ("Flexion:",)},
     "zh": {"lang": "zho", "parsoid": [0]},
+    "ja": {"lang": "jpn", "parsoid": [0]},
 }
