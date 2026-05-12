@@ -33,7 +33,21 @@ jobs:
       contents: write
     strategy:
       matrix:
-        edition: ['en', 'es', 'fr', 'ru', 'de', 'zh', 'ja']
+        edition:
+          - 'en'
+          - 'es'
+          - 'fr'
+          - 'ru'
+          - 'de'
+          - 'zh'
+          - 'ja'
+          - 'pl'
+          - 'el'
+          - 'nl'
+          - 'th'
+          - 'fi'
+          - 'sv'
+          - 'simple'
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TELEMETRY: false
@@ -49,7 +63,11 @@ jobs:
 
       - name: Get tag
         id: get-tag
-        run: echo "tag=${{ (github.event_name == 'push' && github.ref_name) || steps.get-date.outputs.date }}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "tag=${{
+            (github.event_name == 'push' && github.ref_name) ||
+            steps.get-date.outputs.date
+          }}" >> "$GITHUB_OUTPUT"
 
       - if: matrix.edition == 'en'
         run: gh release create ${{ steps.get-tag.outputs.tag }} -d

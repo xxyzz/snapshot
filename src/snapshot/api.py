@@ -106,6 +106,8 @@ def edition_has_update(edition: str, access_token: str) -> bool:
                 f"{edition} edition size decrease: {last_date} is {last_size}MB, "
                 f"{current_date} is {current_size}MB"
             )
+        if current_chunks < last_chunks and current_size < last_size:
+            has_update = False
     return has_update
 
 

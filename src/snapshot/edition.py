@@ -6,4 +6,11 @@ EDITIONS = {
     "de": {"lang": "deu", "parsoid": [0], "kiwix": ("Flexion:",)},
     "zh": {"lang": "zho", "parsoid": [0]},
     "ja": {"lang": "jpn", "parsoid": [0]},
+    "pl": {"lang": "pol", "parsoid": [0]},
+    "el": {"lang": "ell", "parsoid": [0]},
+    "nl": {"lang": "nld", "parsoid": [0]},
+    "th": {"lang": "tha", "parsoid": [0]},
+    "fi": {"lang": "fin", "parsoid": [0]},
+    "sv": {"lang": "swe", "parsoid": [0]},
+    "simple": {"lang": "simple", "parsoid": [0]},
 }
