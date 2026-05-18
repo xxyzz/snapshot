@@ -16,7 +16,10 @@ def build(args):
             create_zim(args.edition)
         create_parsoid_files(args.edition, 0, access_token)
     else:
-        patterns = [f"{args.edition}wiktionary_namespace_0*"]
+        patterns = [
+            f"{args.edition}wiktionary_namespace_0*",
+            f"{args.edition}_redirect.db.zst",
+        ]
         if "kiwix" in EDITIONS[args.edition]:
             patterns.append(f"{args.edition}.zim")
         download_last_release(patterns)

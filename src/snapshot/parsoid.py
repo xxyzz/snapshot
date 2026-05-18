@@ -37,6 +37,7 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     from os import process_cpu_count
 
     from .api import get_snapshot_chunks
+    from .redirect import create_redirect_db
 
     identifier = f"{edition}wiktionary_namespace_{ns_id}"
     snapshot_date, chunks, _ = get_snapshot_chunks(access_token, identifier)
@@ -46,3 +47,4 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
         executor.map(
             partial(compress_parsoid_chunk, access_token, identifier), range(chunks)
         )
+    create_redirect_db(edition)
