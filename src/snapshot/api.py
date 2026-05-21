@@ -1,8 +1,32 @@
 from pathlib import Path
 
 
-def get_access_token() -> str:
+def get_access_token(check_token: bool) -> str:
     import os
+
+    import requests
+
+    token = os.getenv("ACCESSTOKEN")
+    if token is None:
+        token = get_access_token_from_api()
+    elif check_token:
+        r = requests.get(
+            "https://api.enterprise.wikimedia.com/v2/snapshots/enwiktionary_namespace_10",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if not r.ok:
+            if r.text == "Jwt is expired":
+                token = refresh_token(os.getenv("REFRESHTOKEN"))
+            else:
+                raise Exception(
+                    f"Invalid token: {r.status_code=} {r.reason=} {r.text=}"
+                )
+    return token
+
+
+def get_access_token_from_api() -> str:
+    import os
+    from subprocess import run
 
     import requests
 
@@ -10,22 +34,71 @@ def get_access_token() -> str:
         "https://auth.enterprise.wikimedia.com/v1/login",
         json={"username": os.getenv("USERNAME"), "password": os.getenv("PASSWORD")},
     )
-    return r.json()["access_token"]
+    if r.ok:
+        data = r.json()
+        access_token = data["access_token"]
+        run(["gh", "secret", "set", "ACCESSTOKEN", "-b", access_token], check=True)
+        run(
+            ["gh", "secret", "set", "REFRESHTOKEN", "-b", data["refresh_token"]],
+            check=True,
+        )
+        return access_token
+    else:
+        raise Exception(f"Get token failed: {r.status_code=} {r.reason=} {r.text=}")
 
 
-def get_snapshot_chunks(access_token: str, identifier: str) -> tuple[str, int, int]:
+def refresh_token(refresh_t: str) -> str:
+    import os
+    from subprocess import run
+
     import requests
 
-    r = requests.get(
-        f"https://api.enterprise.wikimedia.com/v2/snapshots/{identifier}",
-        headers={"Authorization": f"Bearer {access_token}"},
+    from .main import logger
+
+    r = requests.post(
+        "https://auth.enterprise.wikimedia.com/v1/token-refresh",
+        json={
+            "username": os.getenv("USERNAME"),
+            "refresh_token": os.getenv("REFRESHTOKEN"),
+        },
     )
-    data = r.json()
-    return (
-        data["date_modified"].split("T")[0],
-        len(data["chunks"]),
-        data["size"]["value"],
-    )
+    if r.ok:
+        token = r.json()["access_token"]
+        run(["gh", "secret", "set", "ACCESSTOKEN", "-b", token], check=True)
+        return token
+    else:
+        logger.warning(f"Refresh token failed: {r.status_code=} {r.reason=} {r.text=}")
+        return get_access_token_from_api()
+
+
+def get_snapshot_info(access_token: str, identifier: str) -> dict:
+    import json
+
+    import requests
+
+    json_path = Path("build/info.json")
+    if not json_path.exists():
+        r = requests.get(
+            "https://api.enterprise.wikimedia.com/v2/snapshots",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if r.ok:
+            api_data = r.json()
+            all_data = {}
+            for data in api_data:
+                all_data[data["identifier"]] = {
+                    "date": data["date_modified"].split("T")[0],
+                    "size": data["size"]["value"],
+                    "chunks": len(data["chunks"]),
+                }
+            with json_path.open("w") as f:
+                json.dump(all_data, f)
+            return all_data[identifier]
+        else:
+            raise Exception(f"Get info failed: {r.status_code=} {r.reason=} {r.text=}")
+    else:
+        with json_path.open() as f:
+            return json.load(f)[identifier]
 
 
 def download_chunk(access_token: str, snapshot_id: str, chunk_id: str) -> Path:
@@ -87,9 +160,10 @@ def edition_has_update(edition: str, access_token: str) -> bool:
     from .main import logger
 
     identifier = f"{edition}wiktionary_namespace_0"
-    current_date, current_chunks, current_size = get_snapshot_chunks(
-        access_token, identifier
-    )
+    snapshot_info = get_snapshot_info(access_token, identifier)
+    current_date = snapshot_info["date"]
+    current_chunks = snapshot_info["chunks"]
+    current_size = snapshot_info["size"]
     last_release = get_latest_release_data(identifier)
     last_date = last_release.get("date", "")
     has_update = is_newer_snapshot(current_date, last_date)
@@ -114,7 +188,7 @@ def edition_has_update(edition: str, access_token: str) -> bool:
 def check_update(args):
     from .edition import EDITIONS
 
-    token = get_access_token()
+    token = get_access_token(True)
     if any(edition_has_update(edition, token) for edition in EDITIONS.keys()):
         print("true")
     else:

@@ -10,7 +10,7 @@ def build(args):
     from .parsoid import create_parsoid_files
     from .zim import create_zim
 
-    access_token = get_access_token()
+    access_token = get_access_token(False)
     if edition_has_update(args.edition, access_token):
         if "kiwix" in EDITIONS[args.edition]:
             create_zim(args.edition)

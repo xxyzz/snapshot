@@ -36,11 +36,13 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     from functools import partial
     from os import process_cpu_count
 
-    from .api import get_snapshot_chunks
+    from .api import get_snapshot_info
     from .redirect import create_redirect_db
 
     identifier = f"{edition}wiktionary_namespace_{ns_id}"
-    snapshot_date, chunks, _ = get_snapshot_chunks(access_token, identifier)
+    snapshot_info = get_snapshot_info(access_token, identifier)
+    snapshot_date = snapshot_info["date"]
+    chunks = snapshot_info["chunks"]
     with open(f"build/{identifier}.json", "w") as f:
         json.dump({"date": snapshot_date, "chunks": chunks}, f)
     with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:

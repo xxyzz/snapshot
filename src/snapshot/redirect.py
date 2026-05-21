@@ -30,7 +30,7 @@ def download_title_sql_dump(url: str) -> Path:
         r = requests.get(
             url,
             headers={
-                "user-agent": f"snapshot/{version('snapshot')} (https://github.com/xxyzz/snapshot)"
+                "user-agent": f"snapshot/{version('snap')} (https://github.com/xxyzz/snapshot)"
             },
             stream=True,
         )
