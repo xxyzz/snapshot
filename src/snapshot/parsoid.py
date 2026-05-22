@@ -41,10 +41,9 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
 
     identifier = f"{edition}wiktionary_namespace_{ns_id}"
     snapshot_info = get_snapshot_info(access_token, identifier)
-    snapshot_date = snapshot_info["date"]
     chunks = snapshot_info["chunks"]
     with open(f"build/{identifier}.json", "w") as f:
-        json.dump({"date": snapshot_date, "chunks": chunks}, f)
+        json.dump(snapshot_info, f)
     with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:
         executor.map(
             partial(compress_parsoid_chunk, access_token, identifier), range(chunks)
