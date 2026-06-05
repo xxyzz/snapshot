@@ -29,6 +29,7 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           ACCESSTOKEN: ${{ secrets.ACCESSTOKEN }}
           REFRESHTOKEN: ${{ secrets.REFRESHTOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: echo "need_update=$(snap check)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v7
         with:

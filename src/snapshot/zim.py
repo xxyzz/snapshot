@@ -3,6 +3,12 @@ from pathlib import Path
 from libzim.writer import Item
 
 
+def get_user_agent() -> str:
+    from importlib.metadata import version
+
+    return f"snapshot/{version('snap')} (https://github.com/xxyzz/snapshot)"
+
+
 def download_kiwix_zim(lang_3: str) -> Path:
     import subprocess
     import xml.etree.ElementTree as ET
@@ -10,7 +16,8 @@ def download_kiwix_zim(lang_3: str) -> Path:
     import requests
 
     r = requests.get(
-        f"https://browse.library.kiwix.org/catalog/v2/entries?count=-1&lang={lang_3}&category=wiktionary"
+        f"https://browse.library.kiwix.org/catalog/v2/entries?count=-1&lang={lang_3}&category=wiktionary",
+        headers={"user-agent": get_user_agent()},
     )
     root = ET.fromstring(r.text)
     url = (
@@ -89,7 +96,6 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
 
 def create_zim(edition: str):
     from datetime import UTC, datetime
-    from importlib.resources import files
 
     from libzim.writer import Compression, Creator
 
@@ -116,8 +122,7 @@ def create_zim(edition: str):
             "Language": EDITIONS[edition]["lang"],
         }.items():
             creator.add_metadata(name, value)
-        with open(files("snapshot") / "wiktionary.png", "rb") as f:
-            creator.add_illustration(48, f.read())
+        creator.add_illustration(48, b"\x89PNG\x0d\x0a\x1a\x0a")
         logger.info("Downloading zim")
         kiwix_path = download_kiwix_zim(EDITIONS[edition]["lang"])
         logger.info("Downloading zim done")
