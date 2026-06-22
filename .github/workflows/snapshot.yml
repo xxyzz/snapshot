@@ -20,7 +20,7 @@ jobs:
     outputs:
       need_update: ${{ steps.check-result.outputs.need_update }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
       - run: python -m pip install .
       - id: check-result
@@ -60,7 +60,7 @@ jobs:
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
       - uses: actions/download-artifact@v8
         with:
@@ -97,5 +97,5 @@ jobs:
     if: needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: gh release edit ${{ needs.build.outputs.tag }} --draft=false --latest
