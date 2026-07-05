@@ -109,6 +109,7 @@ def download_chunk(access_token: str, snapshot_id: str, chunk_id: str) -> Path:
         headers={"Authorization": f"Bearer {access_token}"},
         stream=True,
     )
+    r.raise_for_status()
     chunk_tar_path = get_chunk_tar_path(chunk_id)
     chunk_tar_path.parent.mkdir(exist_ok=True)
     with chunk_tar_path.open("wb") as f:
@@ -180,7 +181,11 @@ def edition_has_update(edition: str, access_token: str) -> bool:
                 f"{edition} edition size decrease: {last_date} is {last_size}MB, "
                 f"{current_date} is {current_size}MB"
             )
-        if current_chunks < last_chunks and current_size < last_size:
+        if (
+            current_chunks < last_chunks
+            and current_size < last_size
+            and (last_chunks - current_chunks) / last_chunks >= 1 / 3
+        ):
             has_update = False
     return has_update
 

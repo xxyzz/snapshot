@@ -16,6 +16,7 @@ def build(args):
             create_zim(args.edition)
         create_parsoid_files(args.edition, 0, access_token)
     else:
+        logger.info("Download last release files")
         patterns = [
             f"{args.edition}wiktionary_namespace_0*",
             f"{args.edition}_redirect.db.zst",
