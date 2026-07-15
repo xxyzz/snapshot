@@ -89,7 +89,7 @@ def parse_page_sql(sql_path: Path) -> dict[str, str]:
             if line.startswith("INSERT INTO "):
                 for row in parse_sql_line(line):
                     page_id, namespace, title, is_redirect, *_ = row
-                    if namespace == "0" and is_redirect == "0":
+                    if namespace == "0" and is_redirect == "1":
                         pages[page_id] = title.replace("_", " ")
     return pages
 

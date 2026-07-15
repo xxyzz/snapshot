@@ -109,7 +109,10 @@ def download_chunk(access_token: str, snapshot_id: str, chunk_id: str) -> Path:
         headers={"Authorization": f"Bearer {access_token}"},
         stream=True,
     )
-    r.raise_for_status()
+    if not r.ok:
+        raise Exception(
+            f"Download chunk failed: {r.status_code=} {r.reason=} {r.text=}"
+        )
     chunk_tar_path = get_chunk_tar_path(chunk_id)
     chunk_tar_path.parent.mkdir(exist_ok=True)
     with chunk_tar_path.open("wb") as f:
