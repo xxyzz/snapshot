@@ -10,7 +10,7 @@ EDITIONS = {
     "el": {"lang": "ell", "parsoid": [0]},
     "nl": {"lang": "nld", "parsoid": [0]},
     "th": {"lang": "tha", "parsoid": [0]},
-    "fi": {"lang": "fin", "parsoid": [0]},
+    "fi": {"lang": "fin", "parsoid": [0], "kiwix": ("Liite:",)},
     "sv": {"lang": "swe", "parsoid": [0]},
     "simple": {"lang": "simple", "parsoid": [0]},
 }

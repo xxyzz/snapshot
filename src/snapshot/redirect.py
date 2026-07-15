@@ -82,31 +82,31 @@ def parse_sql_line(line: str):
 
 
 def parse_page_sql(sql_path: Path) -> dict[str, str]:
+    # https://www.mediawiki.org/wiki/Manual:Page_table
     pages = {}
     with sql_path.open() as f:
         for line in f:
             if line.startswith("INSERT INTO "):
                 for row in parse_sql_line(line):
                     page_id, namespace, title, is_redirect, *_ = row
-                    if namespace != "0" or is_redirect != "1":
-                        continue
-                    pages[page_id] = title.replace("_", " ")
+                    if namespace == "0" and is_redirect == "0":
+                        pages[page_id] = title.replace("_", " ")
     return pages
 
 
 def parse_redirect_sql(sql_path: Path, pages: dict[str, str], conn: Connection):
+    # https://www.mediawiki.org/wiki/Manual:Redirect_table
     with sql_path.open() as f:
         for line in f:
             if line.startswith("INSERT INTO "):
                 for row in parse_sql_line(line):
                     from_id, namespace, title, interwiki, fragment = row
-                    if namespace != "0" or interwiki != "" or from_id not in pages:
-                        continue
-                    title = title.replace("_", " ")
-                    conn.execute(
-                        "INSERT INTO redirect VALUES(?, ?, ?)",
-                        (pages.get(from_id, ""), title, fragment.replace(" ", "_")),
-                    )
+                    if namespace == "0" and interwiki == "" and from_id in pages:
+                        title = title.replace("_", " ")
+                        conn.execute(
+                            "INSERT INTO redirect VALUES(?, ?, ?)",
+                            (pages.get(from_id, ""), title, fragment.replace(" ", "_")),
+                        )
 
 
 def create_redirect_db(edition: str):
