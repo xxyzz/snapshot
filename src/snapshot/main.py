@@ -12,9 +12,12 @@ def build(args):
 
     access_token = get_access_token(False)
     if edition_has_update(args.edition, access_token):
-        if "kiwix" in EDITIONS[args.edition]:
-            create_zim(args.edition)
         create_parsoid_files(args.edition, 0, access_token)
+        if (
+            "kiwix" in EDITIONS[args.edition]
+            or "main_ns_suffixes" in EDITIONS[args.edition]
+        ):
+            create_zim(args.edition)
     else:
         logger.info("Download last release files")
         patterns = [

@@ -8,7 +8,11 @@ EDITIONS = {
     "ja": {"lang": "jpn", "parsoid": [0]},
     "pl": {"lang": "pol", "parsoid": [0]},
     "el": {"lang": "ell", "parsoid": [0]},
-    "nl": {"lang": "nld", "parsoid": [0]},
+    "nl": {
+        "lang": "nld",
+        "parsoid": [0],
+        "main_ns_suffixes": ("/vervoeging", "/verbuiging"),
+    },
     "th": {"lang": "tha", "parsoid": [0]},
     "fi": {"lang": "fin", "parsoid": [0], "kiwix": ("Liite:",)},
     "sv": {"lang": "swe", "parsoid": [0]},

@@ -94,6 +94,30 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
             )
 
 
+def add_parsoid_pages(zim_creator, suffixes: tuple[str]):
+    import json
+    import shutil
+    from compression import zstd
+
+    from .main import logger
+
+    added_pages = set()
+    for zst_path in Path("build").glob("*.zst"):
+        logger.info(f"Adding pages from {zst_path.name} to zim")
+        ndjson_path = zst_path.with_suffix(".ndjson")
+        with zstd.open(zst_path, "rb") as f_in, ndjson_path.open("wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        with ndjson_path.open() as f:
+            for line in f:
+                data = json.loads(line)
+                if data["name"].endswith(suffixes) and data["name"] not in added_pages:
+                    zim_creator.add_item(
+                        MyItem(data["name"], data["name"], data["html"], "text/html")
+                    )
+                    added_pages.add(data["name"])
+        ndjson_path.unlink()
+
+
 def create_zim(edition: str):
     from datetime import UTC, datetime
 
@@ -123,8 +147,11 @@ def create_zim(edition: str):
         }.items():
             creator.add_metadata(name, value)
         creator.add_illustration(48, b"\x89PNG\x0d\x0a\x1a\x0a")
-        logger.info("Downloading zim")
-        kiwix_path = download_kiwix_zim(EDITIONS[edition]["lang"])
-        logger.info("Downloading zim done")
-        add_kiwix_pages(creator, kiwix_path, EDITIONS[edition]["kiwix"])
-        kiwix_path.unlink()
+        if "kiwix" in EDITIONS[edition]:
+            logger.info("Downloading zim")
+            kiwix_path = download_kiwix_zim(EDITIONS[edition]["lang"])
+            logger.info("Downloading zim done")
+            add_kiwix_pages(creator, kiwix_path, EDITIONS[edition]["kiwix"])
+            kiwix_path.unlink()
+        else:
+            add_parsoid_pages(creator, EDITIONS[edition]["main_ns_suffixes"])
