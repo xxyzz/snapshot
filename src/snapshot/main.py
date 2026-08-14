@@ -24,7 +24,10 @@ def build(args):
             f"{args.edition}wiktionary_namespace_0*",
             f"{args.edition}_redirect.db.zst",
         ]
-        if "kiwix" in EDITIONS[args.edition]:
+        if (
+            "kiwix" in EDITIONS[args.edition]
+            or "main_ns_suffixes" in EDITIONS[args.edition]
+        ):
             patterns.append(f"{args.edition}.zim")
         download_last_release(patterns)
 

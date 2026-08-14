@@ -45,7 +45,9 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     with open(f"build/{identifier}.json", "w") as f:
         json.dump(snapshot_info, f)
     with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:
-        executor.map(
-            partial(compress_parsoid_chunk, access_token, identifier), range(chunks)
+        list(
+            executor.map(
+                partial(compress_parsoid_chunk, access_token, identifier), range(chunks)
+            )
         )
     create_redirect_db(edition)

@@ -17,4 +17,7 @@ EDITIONS = {
     "fi": {"lang": "fin", "parsoid": [0], "kiwix": ("Liite:",)},
     "sv": {"lang": "swe", "parsoid": [0]},
     "simple": {"lang": "simple", "parsoid": [0]},
+    "it": {"lang": "ita", "parsoid": [0]},
+    "pt": {"lang": "por", "parsoid": [0]},
+    "vi": {"lang": "vie", "parsoid": [0]},
 }

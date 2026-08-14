@@ -57,6 +57,9 @@ jobs:
           - 'fi'
           - 'sv'
           - 'simple'
+          - 'it'
+          - 'pt'
+          - 'vi'
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     steps:
@@ -88,8 +91,7 @@ jobs:
 
       - run: |
           rm build/info.json
-          gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json
-          gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zst
+          gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json build/*.zst
       - if: contains(fromJSON('["fr", "de", "fi", "nl"]'), matrix.edition)
         run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
 
