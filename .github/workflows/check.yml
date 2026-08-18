@@ -1,0 +1,48 @@
+name: check
+
+on:
+  push:
+    tags:
+      - '*'
+  schedule:
+    - cron: '42 1 5 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_TELEMETRY: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+      - run: python -m pip install .
+
+      - name: Get date
+        id: get-date
+        run: echo "date=$(/bin/date -u "+%Y%m%d")" >> "$GITHUB_OUTPUT"
+
+      - name: Get tag
+        run: |
+          echo "${{
+            (github.event_name == 'push' && github.ref_name) ||
+            steps.get-date.outputs.date
+          }}" > build/tag
+
+      - run: echo "$(snap check)" > build/check_result
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          ACCESSTOKEN: ${{ secrets.ACCESSTOKEN }}
+          REFRESHTOKEN: ${{ secrets.REFRESHTOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
+      - uses: actions/upload-artifact@v7
+        with:
+          path: |
+            build/info.json
+            build/tag
+            build/check_result
