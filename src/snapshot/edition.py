@@ -20,4 +20,9 @@ EDITIONS = {
     "it": {"lang": "ita", "parsoid": [0], "kiwix": ("Appendice:Coniugazioni/",)},
     "pt": {"lang": "por", "parsoid": [0]},
     "vi": {"lang": "vie", "parsoid": [0]},
+    "tr": {"lang": "tur", "parsoid": [0]},
+    "ku": {"lang": "kur", "parsoid": [0], "kiwix": ("Tewandin:",)},
+    "id": {"lang": "ind", "parsoid": [0]},
+    "cs": {"lang": "ces", "parsoid": [0]},
+    "ko": {"lang": "kor", "parsoid": [0]},
 }

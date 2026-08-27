@@ -16,7 +16,7 @@ def download_kiwix_zim(lang_3: str) -> Path:
     import requests
 
     r = requests.get(
-        f"https://browse.library.kiwix.org/catalog/v2/entries?count=-1&lang={lang_3}&category=wiktionary",
+        f"https://browse.library.kiwix.org/catalog/v2/entries?count=1&lang={lang_3}&category=wiktionary",
         headers={"user-agent": get_user_agent()},
     )
     root = ET.fromstring(r.text)

@@ -5,8 +5,6 @@ on:
     workflows: [check]
     types:
       - completed
-    branches:
-      - master
 
 permissions:
   contents: write
@@ -54,6 +52,11 @@ jobs:
           - 'it'
           - 'pt'
           - 'vi'
+          - 'tr'
+          - 'ku'
+          - 'id'
+          - 'cs'
+          - 'ko'
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     steps:
@@ -80,8 +83,9 @@ jobs:
       - run: |
           rm build/info.json
           gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json build/*.zst
-      - if: contains(fromJSON('["fr", "de", "fi", "nl", "it"]'), matrix.edition)
-        run: gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
+          if compgen -G "*.zim" > /dev/null; then
+            gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
+          fi
 
   release:
     needs: build
