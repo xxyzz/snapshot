@@ -12,22 +12,29 @@ def get_user_agent() -> str:
 def download_kiwix_zim(lang_3: str) -> Path:
     import subprocess
     import xml.etree.ElementTree as ET
+    from datetime import datetime
 
     import requests
 
+    # https://kiwix-tools.readthedocs.io/en/latest/kiwix-serve.html#new-opds-api
     r = requests.get(
-        f"https://browse.library.kiwix.org/catalog/v2/entries?count=1&lang={lang_3}&category=wiktionary",
+        f"https://opds.library.kiwix.org/catalog/v2/entries?count=2&lang={lang_3}&category=wiktionary",
         headers={"user-agent": get_user_agent()},
     )
     root = ET.fromstring(r.text)
-    url = (
-        root.find(
-            "entry/link[@type='application/x-zim']",
-            namespaces={"": "http://www.w3.org/2005/Atom"},
-        )
-        .get("href")
-        .removesuffix(".meta4")
-    )
+    url = ""
+    file_date = None
+    ns = {"": "http://www.w3.org/2005/Atom"}
+    for entry in root.findall("entry", namespaces=ns):
+        entry_date = datetime.fromisoformat(entry.find("updated", namespaces=ns).text)
+        if file_date is None or entry_date > file_date:
+            url = (
+                entry.find("link[@type='application/x-zim']", namespaces=ns)
+                .get("href")
+                .removesuffix(".meta4")
+            )
+            file_date = entry_date
+
     zim_path = Path(f"build/{url.rsplit('/', 1)[-1]}")
     url += ".torrent"
     subprocess.run(["aria2c", "-d", "build", "--seed-time", "0", url], check=True)
