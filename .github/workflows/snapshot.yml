@@ -59,6 +59,14 @@ jobs:
           - 'ko'
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
+    services:
+      mariadb:
+        image: mariadb
+        env:
+          MARIADB_ROOT_PASSWORD: password
+          MARIADB_DATABASE: main
+        ports:
+          - 3306:3306
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -75,6 +83,10 @@ jobs:
       - if: matrix.edition == 'en'
         run: gh release create ${{ steps.get-tag.outputs.tag }} -d
 
+      - run: |
+          sudo apt update
+          sudo apt install mariadb-client
+
       - run: python -m pip install .
       - run: snap build ${{ matrix.edition }}
         env:
@@ -83,7 +95,7 @@ jobs:
       - run: |
           rm build/info.json
           gh release upload ${{ steps.get-tag.outputs.tag }} build/*.json build/*.zst
-          if compgen -G "*.zim" > /dev/null; then
+          if compgen -G "build/*.zim" > /dev/null; then
             gh release upload ${{ steps.get-tag.outputs.tag }} build/*.zim
           fi
 

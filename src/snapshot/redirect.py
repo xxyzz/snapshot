@@ -65,71 +65,59 @@ def init_redirect_db(edition: str) -> tuple[Path, Connection]:
     return db_path, conn
 
 
-def parse_sql_line(line: str):
-    import csv
-    import io
-    import re
-
-    line = re.sub(r"^INSERT INTO `.+` VALUES \(", "", line)
-    line = line.strip("(); \n").replace("),(", "\n")
-    return csv.reader(
-        io.StringIO(line),
-        delimiter=",",
-        quotechar="'",
-        escapechar="\\",
-        doublequote=False,
-    )
-
-
-def parse_page_sql(sql_path: Path) -> dict[str, str]:
-    # https://www.mediawiki.org/wiki/Manual:Page_table
-    pages = {}
-    with sql_path.open() as f:
-        for line in f:
-            if line.startswith("INSERT INTO "):
-                for row in parse_sql_line(line):
-                    page_id, namespace, title, is_redirect, *_ = row
-                    if namespace == "0" and is_redirect == "1":
-                        pages[page_id] = title.replace("_", " ")
-    return pages
-
-
-def parse_redirect_sql(sql_path: Path, pages: dict[str, str], conn: Connection):
-    # https://www.mediawiki.org/wiki/Manual:Redirect_table
-    with sql_path.open() as f:
-        for line in f:
-            if line.startswith("INSERT INTO "):
-                for row in parse_sql_line(line):
-                    from_id, namespace, title, interwiki, fragment = row
-                    if namespace == "0" and interwiki == "" and from_id in pages:
-                        title = title.replace("_", " ")
-                        conn.execute(
-                            "INSERT INTO redirect VALUES(?, ?, ?)",
-                            (pages.get(from_id, ""), title, fragment.replace(" ", "_")),
-                        )
-
-
 def create_redirect_db(edition: str):
+    # https://www.mediawiki.org/wiki/Manual:Redirect_table
+    # https://www.mediawiki.org/wiki/Manual:Page_table
     import shutil
+    import subprocess
     from compression import zstd
+
+    import mariadb
 
     from .main import logger
 
-    input_sql_paths = download_title_sql_dumps(edition)
-    db_path, conn = init_redirect_db(edition)
-    pages = {}
-    for input_path in input_sql_paths:
-        if input_path.name.endswith("-page.sql"):
-            pages = parse_page_sql(input_path)
-        else:
-            parse_redirect_sql(input_path, pages, conn)
-        input_path.unlink()
-    conn.executescript("""
+    db_path, sqlite_conn = init_redirect_db(edition)
+    dump_sql_paths = download_title_sql_dumps(edition)
+
+    for sql_path in dump_sql_paths:
+        with open(sql_path) as f:
+            subprocess.run(
+                [
+                    "mariadb",
+                    "--host=127.0.0.1",
+                    "--port=3306",
+                    "--user=root",
+                    "--password=password",
+                    "--database=main",
+                    "--silent",
+                ],
+                check=True,
+                stdin=f,
+            )
+        sql_path.unlink()
+    with mariadb.connect("mariadb://root:password@127.0.0.1:3306/main") as mariadb_conn:
+        with mariadb_conn.cursor() as cursor:
+            cursor.execute("""
+            SELECT page_title, rd_title, rd_fragment
+            FROM page INNER JOIN redirect ON page.page_id = redirect.rd_from
+            WHERE rd_namespace = 0 AND page_namespace = 0 AND rd_interwiki = ''
+            """)
+            for page_title, rd_title, rd_fragment in cursor:
+                sqlite_conn.execute(
+                    "INSERT INTO redirect VALUES(?, ?, ?)",
+                    (
+                        page_title.decode("utf-8").replace("_", " "),
+                        rd_title.decode("utf-8").replace("_", " "),
+                        rd_fragment.decode("utf-8").replace(" ", "_"),
+                    ),
+                )
+
+    sqlite_conn.executescript("""
     CREATE INDEX target_idx ON redirect (target);
     PRAGMA optimize;
     """)
-    conn.commit()
-    conn.close()
+    sqlite_conn.commit()
+    sqlite_conn.close()
     zst_path = db_path.with_suffix(db_path.suffix + ".zst")
     with db_path.open("rb") as f_in, zstd.open(zst_path, "wb") as f_out:
         shutil.copyfileobj(f_in, f_out)
