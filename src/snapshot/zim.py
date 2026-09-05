@@ -123,7 +123,7 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
             )
 
 
-def add_parsoid_pages(zim_creator, suffixes: tuple[str]):
+def add_parsoid_pages(edition: str, zim_creator, suffixes: tuple[str]):
     import json
     import shutil
     from compression import zstd
@@ -131,7 +131,7 @@ def add_parsoid_pages(zim_creator, suffixes: tuple[str]):
     from .main import logger
 
     added_pages = set()
-    for zst_path in Path("build").glob("*.zst"):
+    for zst_path in Path("build").glob(f"{edition}wiktionary_*.zst"):
         logger.info(f"Adding pages from {zst_path.name} to zim")
         ndjson_path = zst_path.with_suffix(".ndjson")
         with zstd.open(zst_path, "rb") as f_in, ndjson_path.open("wb") as f_out:
@@ -158,6 +158,15 @@ def create_zim(edition: str):
     zim_path = Path(f"build/{edition}.zim")
     if zim_path.exists():
         zim_path.unlink()
+
+    if "kiwix" in EDITIONS[edition]:
+        logger.info("Downloading zim")
+        kiwix_path = download_kiwix_zim(edition, EDITIONS[edition]["lang"])
+        if zim_path.exists():
+            logger.info("No newer kiwix file, downloaded last release zim file")
+            return
+        logger.info("Kiwix zim file downloaded")
+
     with (
         Creator(zim_path)
         .config_compression(Compression.zstd)
@@ -177,10 +186,7 @@ def create_zim(edition: str):
             creator.add_metadata(name, value)
         creator.add_illustration(48, b"\x89PNG\x0d\x0a\x1a\x0a")
         if "kiwix" in EDITIONS[edition]:
-            logger.info("Downloading zim")
-            kiwix_path = download_kiwix_zim(edition, EDITIONS[edition]["lang"])
-            logger.info("Downloading zim done")
             add_kiwix_pages(creator, kiwix_path, EDITIONS[edition]["kiwix"])
             kiwix_path.unlink()
         else:
-            add_parsoid_pages(creator, EDITIONS[edition]["main_ns_suffixes"])
+            add_parsoid_pages(edition, creator, EDITIONS[edition]["main_ns_suffixes"])
