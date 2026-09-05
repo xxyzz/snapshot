@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from libzim.writer import Item
@@ -9,12 +10,25 @@ def get_user_agent() -> str:
     return f"snapshot/{version('snap')} (https://github.com/xxyzz/snapshot)"
 
 
-def download_kiwix_zim(lang_3: str) -> Path:
+def get_last_release_zim_date(edition: str) -> datetime | None:
+    import requests
+
+    r = requests.get(
+        f"https://github.com/xxyzz/snapshot/releases/latest/download/{edition}_zim.json"
+    )
+    if r.ok:
+        return datetime.fromisoformat(r.json()["date"])
+    return None
+
+
+def download_kiwix_zim(edition: str, lang_3: str) -> Path:
+    import json
     import subprocess
     import xml.etree.ElementTree as ET
-    from datetime import datetime
 
     import requests
+
+    from .api import download_last_release
 
     # https://kiwix-tools.readthedocs.io/en/latest/kiwix-serve.html#new-opds-api
     r = requests.get(
@@ -37,7 +51,15 @@ def download_kiwix_zim(lang_3: str) -> Path:
 
     zim_path = Path(f"build/{url.rsplit('/', 1)[-1]}")
     url += ".torrent"
-    subprocess.run(["aria2c", "-d", "build", "--seed-time", "0", url], check=True)
+    last_release_date = get_last_release_zim_date(edition)
+    if last_release_date is None or file_date > last_release_date:
+        subprocess.run(["aria2c", "-d", "build", "--seed-time", "0", url], check=True)
+    else:
+        download_last_release([f"{edition}.zim"])
+        file_date = last_release_date
+
+    with open(f"build/{edition}_zim.json", "w") as f:
+        json.dump({"date": file_date.isoformat()}, f)
     return zim_path
 
 
@@ -156,7 +178,7 @@ def create_zim(edition: str):
         creator.add_illustration(48, b"\x89PNG\x0d\x0a\x1a\x0a")
         if "kiwix" in EDITIONS[edition]:
             logger.info("Downloading zim")
-            kiwix_path = download_kiwix_zim(EDITIONS[edition]["lang"])
+            kiwix_path = download_kiwix_zim(edition, EDITIONS[edition]["lang"])
             logger.info("Downloading zim done")
             add_kiwix_pages(creator, kiwix_path, EDITIONS[edition]["kiwix"])
             kiwix_path.unlink()
