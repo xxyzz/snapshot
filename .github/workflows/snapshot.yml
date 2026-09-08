@@ -57,6 +57,7 @@ jobs:
           - 'id'
           - 'cs'
           - 'ko'
+          - 'ro'
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     services:
@@ -81,7 +82,9 @@ jobs:
         run: echo "tag=$(cat build/tag)" >> "$GITHUB_OUTPUT"
 
       - if: matrix.edition == 'en'
-        run: gh release create ${{ steps.get-tag.outputs.tag }} -d
+        run: |
+          gh release create ${{ steps.get-tag.outputs.tag }} \
+            --title ${{ steps.get-tag.outputs.tag }} --draft
 
       - run: |
           sudo apt update

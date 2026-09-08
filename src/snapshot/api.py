@@ -16,7 +16,7 @@ def get_access_token(check_token: bool) -> str:
         )
         if not r.ok:
             if r.text == "Jwt is expired":
-                token = refresh_token(os.getenv("REFRESHTOKEN"))
+                token = refresh_token()
             else:
                 raise Exception(
                     f"Invalid token: {r.status_code=} {r.reason=} {r.text=}"
@@ -47,7 +47,7 @@ def get_access_token_from_api() -> str:
         raise Exception(f"Get token failed: {r.status_code=} {r.reason=} {r.text=}")
 
 
-def refresh_token(refresh_t: str) -> str:
+def refresh_token() -> str:
     import os
     from subprocess import run
 
@@ -92,7 +92,7 @@ def get_snapshot_info(access_token: str, identifier: str) -> dict:
                     "chunks": len(data["chunks"]),
                 }
             with json_path.open("w") as f:
-                json.dump(all_data, f)
+                json.dump(all_data, f, ensure_ascii=False, separators=(",", ":"))
             return all_data[identifier]
         else:
             raise Exception(f"Get info failed: {r.status_code=} {r.reason=} {r.text=}")

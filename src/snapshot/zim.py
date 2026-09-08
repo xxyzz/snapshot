@@ -59,7 +59,12 @@ def download_kiwix_zim(edition: str, lang_3: str) -> Path:
         file_date = last_release_date
 
     with open(f"build/{edition}_zim.json", "w") as f:
-        json.dump({"date": file_date.isoformat()}, f)
+        json.dump(
+            {"date": file_date.isoformat()},
+            f,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
     return zim_path
 
 
