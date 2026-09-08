@@ -25,4 +25,6 @@ EDITIONS = {
     "id": {"lang": "ind", "parsoid": [0]},
     "cs": {"lang": "ces", "parsoid": [0]},
     "ko": {"lang": "kor", "parsoid": [0]},
+    "ro": {"lang": "ron", "parsoid": [0]},
+    "ca": {"lang": "cat", "parsoid": [0]},
 }
