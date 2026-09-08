@@ -92,7 +92,7 @@ def get_snapshot_info(access_token: str, identifier: str) -> dict:
                     "chunks": len(data["chunks"]),
                 }
             with json_path.open("w") as f:
-                json.dump(all_data, f)
+                json.dump(all_data, f, ensure_ascii=False, separators=(",", ":"))
             return all_data[identifier]
         else:
             raise Exception(f"Get info failed: {r.status_code=} {r.reason=} {r.text=}")

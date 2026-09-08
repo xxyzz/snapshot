@@ -57,6 +57,7 @@ jobs:
           - 'id'
           - 'cs'
           - 'ko'
+          - 'ro'
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
     services:

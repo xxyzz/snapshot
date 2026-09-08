@@ -19,6 +19,7 @@ def compress_parsoid_chunk(access_token: str, identifier: str, chunk_num: int):
                 {"name": data["name"], "html": data["article_body"]["html"]},
                 f_out,
                 ensure_ascii=False,
+                separators=(",", ":"),
             )
             f_out.write("\n")
     logger.info(f"{chunk} filter done")
@@ -43,7 +44,7 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     snapshot_info = get_snapshot_info(access_token, identifier)
     chunks = snapshot_info["chunks"]
     with open(f"build/{identifier}.json", "w") as f:
-        json.dump(snapshot_info, f)
+        json.dump(snapshot_info, f, ensure_ascii=False, separators=(",", ":"))
     with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:
         list(
             executor.map(
