@@ -1,4 +1,4 @@
-def compress_parsoid_chunk(access_token: str, identifier: str, chunk_num: int):
+def compress_parsoid_chunk(identifier: str, chunk_num: int):
     import json
     import shutil
     from compression import zstd
@@ -9,7 +9,7 @@ def compress_parsoid_chunk(access_token: str, identifier: str, chunk_num: int):
 
     chunk = f"{identifier}_chunk_{chunk_num}"
     logger.info(f"Downloading {chunk}")
-    ndjson_path = download_chunk(access_token, identifier, chunk)
+    ndjson_path = download_chunk(identifier, chunk)
     logger.info(f"Start {chunk}")
     new_ndjson_path = Path(f"build/{chunk}.ndjson")
     with ndjson_path.open() as f_in, new_ndjson_path.open("w") as f_out:
@@ -31,6 +31,15 @@ def compress_parsoid_chunk(access_token: str, identifier: str, chunk_num: int):
     logger.info(f"{chunk} compress done")
 
 
+def init_worker(access_token: str):
+    import atexit
+
+    from .api import close_session, init_session
+
+    init_session(access_token)
+    atexit.register(close_session)
+
+
 def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     import json
     from concurrent.futures import ProcessPoolExecutor
@@ -45,10 +54,10 @@ def create_parsoid_files(edition: str, ns_id: int, access_token: str):
     chunks = snapshot_info["chunks"]
     with open(f"build/{identifier}.json", "w") as f:
         json.dump(snapshot_info, f, ensure_ascii=False, separators=(",", ":"))
-    with ProcessPoolExecutor(max_workers=min(chunks, process_cpu_count())) as executor:
-        list(
-            executor.map(
-                partial(compress_parsoid_chunk, access_token, identifier), range(chunks)
-            )
-        )
+    with ProcessPoolExecutor(
+        max_workers=min(chunks, process_cpu_count()),
+        initializer=init_worker,
+        initargs=(access_token,),
+    ) as executor:
+        list(executor.map(partial(compress_parsoid_chunk, identifier), range(chunks)))
     create_redirect_db(edition)

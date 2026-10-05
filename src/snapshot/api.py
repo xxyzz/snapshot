@@ -101,12 +101,29 @@ def get_snapshot_info(access_token: str, identifier: str) -> dict:
             return json.load(f)[identifier]
 
 
-def download_chunk(access_token: str, snapshot_id: str, chunk_id: str) -> Path:
-    import requests
+def init_session(access_token: str):
+    from requests import Session
+    from requests.adapters import HTTPAdapter
+    from urllib3.util import Retry
 
-    r = requests.get(
+    global session
+    session = Session()
+    session.mount(
+        "https://",
+        HTTPAdapter(
+            max_retries=Retry(total=5, backoff_factor=0.1, status_forcelist=[429])
+        ),
+    )
+    session.headers.update({"Authorization": f"Bearer {access_token}"})
+
+
+def close_session():
+    session.close()
+
+
+def download_chunk(snapshot_id: str, chunk_id: str) -> Path:
+    r = session.get(
         f"https://api.enterprise.wikimedia.com/v2/snapshots/{snapshot_id}/chunks/{chunk_id}/download",
-        headers={"Authorization": f"Bearer {access_token}"},
         stream=True,
     )
     if not r.ok:
