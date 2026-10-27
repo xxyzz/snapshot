@@ -102,15 +102,17 @@ def create_redirect_db(edition: str):
             FROM page INNER JOIN redirect ON page.page_id = redirect.rd_from
             WHERE rd_namespace = 0 AND page_namespace = 0 AND rd_interwiki = ''
             """)
-            for page_title, rd_title, rd_fragment in cursor:
-                sqlite_conn.execute(
-                    "INSERT INTO redirect VALUES(?, ?, ?)",
+            sqlite_conn.executemany(
+                "INSERT INTO redirect VALUES(?, ?, ?)",
+                (
                     (
                         page_title.decode("utf-8").replace("_", " "),
                         rd_title.decode("utf-8").replace("_", " "),
                         rd_fragment.decode("utf-8").replace(" ", "_"),
-                    ),
-                )
+                    )
+                    for page_title, rd_title, rd_fragment in cursor
+                ),
+            )
 
     sqlite_conn.executescript("""
     CREATE INDEX target_idx ON redirect (target);
