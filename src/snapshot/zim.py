@@ -103,7 +103,7 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
 
     kiwix_zim = Archive(kiwix_zim_path)
     for entry_id in range(kiwix_zim.all_entry_count):
-        entry = kiwix_zim._get_entry_by_id(entry_id)
+        entry = kiwix_zim.get_entry_by_id(entry_id)
         if entry.title.startswith(ns_prefixes):
             if not entry.is_redirect:
                 item = entry.get_item()
