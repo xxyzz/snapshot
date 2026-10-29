@@ -33,7 +33,7 @@ jobs:
             steps.get-date.outputs.date
           }}" > build/tag
 
-      - run: echo "$(snap check)" > build/check_result
+      - run: echo "$(sp check)" > build/check_result
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}

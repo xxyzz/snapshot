@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm[simple]"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "snap"
+name = "sp"
 version = "0.1.0"
 authors = [{ name = "xxyzz" }]
 description = "Parsoid snapshot chunks"
@@ -21,7 +21,7 @@ dependencies = [
 dev = ["ruff"]
 
 [project.scripts]
-snap = "snapshot.main:main"
+sp = "snapshot.main:main"
 
 [tool.ruff.lint]
 select = [

@@ -16,24 +16,18 @@ def download_title_sql_dumps(edition: str) -> list[Path]:
 def download_title_sql_dump(url: str) -> Path:
     import gzip
     import shutil
-    from importlib.metadata import version
 
     import requests
 
     from .main import logger
+    from .zim import get_user_agent
 
     filename = url.rsplit("/", maxsplit=1)[-1]
     sql_gz_path = Path("build") / filename
     sql_path = sql_gz_path.with_name(sql_gz_path.stem)
     if not sql_path.exists() and not sql_gz_path.exists():
         logger.info(f"Downloading {filename}")
-        r = requests.get(
-            url,
-            headers={
-                "user-agent": f"snapshot/{version('snap')} (https://github.com/xxyzz/snapshot)"
-            },
-            stream=True,
-        )
+        r = requests.get(url, headers={"user-agent": get_user_agent()}, stream=True)
         with sql_gz_path.open("wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)

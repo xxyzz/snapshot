@@ -7,7 +7,7 @@ from libzim.writer import Item
 def get_user_agent() -> str:
     from importlib.metadata import version
 
-    return f"snapshot/{version('snap')} (https://github.com/xxyzz/snapshot)"
+    return f"snapshot/{version('sp')} (https://github.com/xxyzz/snapshot)"
 
 
 def get_last_release_zim_date(edition: str) -> datetime | None:
@@ -102,8 +102,7 @@ def add_kiwix_pages(zim_creator, kiwix_zim_path: Path, ns_prefixes: tuple[str]):
     from lxml import etree, html
 
     kiwix_zim = Archive(kiwix_zim_path)
-    for entry_id in range(kiwix_zim.all_entry_count):
-        entry = kiwix_zim._get_entry_by_id(entry_id)
+    for entry in kiwix_zim:
         if entry.title.startswith(ns_prefixes):
             if not entry.is_redirect:
                 item = entry.get_item()
@@ -189,7 +188,7 @@ def create_zim(edition: str):
             "Language": EDITIONS[edition]["lang"],
         }.items():
             creator.add_metadata(name, value)
-        creator.add_illustration(48, b"\x89PNG\x0d\x0a\x1a\x0a")
+        creator.add_illustration(b"\x89PNG\x0d\x0a\x1a\x0a", 48)
         if "kiwix" in EDITIONS[edition]:
             add_kiwix_pages(creator, kiwix_path, EDITIONS[edition]["kiwix"])
             kiwix_path.unlink()
