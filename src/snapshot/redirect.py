@@ -2,18 +2,7 @@ from pathlib import Path
 from sqlite3 import Connection
 
 
-def download_title_sql_dumps(edition: str) -> list[Path]:
-    paths = []
-    for file in ("-page.sql.gz", "-redirect.sql.gz"):
-        paths.append(
-            download_title_sql_dump(
-                f"https://dumps.wikimedia.org/{edition}wiktionary/latest/{edition}wiktionary-latest{file}"
-            )
-        )
-    return paths
-
-
-def download_title_sql_dump(url: str) -> Path:
+def download_redirect_sql_dump(edition: str) -> Path:
     import gzip
     import shutil
 
@@ -22,6 +11,7 @@ def download_title_sql_dump(url: str) -> Path:
     from .main import logger
     from .zim import get_user_agent
 
+    url = f"https://dumps.wikimedia.org/{edition}wiktionary/latest/{edition}wiktionary-latest-redirect.sql.gz"
     filename = url.rsplit("/", maxsplit=1)[-1]
     sql_gz_path = Path("build") / filename
     sql_path = sql_gz_path.with_name(sql_gz_path.stem)
@@ -50,9 +40,10 @@ def init_redirect_db(edition: str) -> tuple[Path, Connection]:
     PRAGMA journal_mode=WAL;
 
     CREATE TABLE redirect (
-      source   TEXT PRIMARY KEY,
-      target   TEXT,
-      fragment TEXT
+      from_id  INTEGER,
+      title    TEXT,
+      fragment TEXT,
+      PRIMARY KEY (from_id, title)
     );
     """)
 
@@ -71,47 +62,42 @@ def create_redirect_db(edition: str):
     from .main import logger
 
     db_path, sqlite_conn = init_redirect_db(edition)
-    dump_sql_paths = download_title_sql_dumps(edition)
-
-    for sql_path in dump_sql_paths:
-        with open(sql_path) as f:
-            subprocess.run(
-                [
-                    "mariadb",
-                    "--host=127.0.0.1",
-                    "--port=3306",
-                    "--user=root",
-                    "--password=password",
-                    "--database=main",
-                    "--silent",
-                ],
-                check=True,
-                stdin=f,
-            )
-        sql_path.unlink()
+    sql_path = download_redirect_sql_dump(edition)
+    with open(sql_path) as f:
+        subprocess.run(
+            [
+                "mariadb",
+                "--host=127.0.0.1",
+                "--port=3306",
+                "--user=root",
+                "--password=password",
+                "--database=main",
+                "--silent",
+            ],
+            check=True,
+            stdin=f,
+        )
+    sql_path.unlink()
     with mariadb.connect("mariadb://root:password@127.0.0.1:3306/main") as mariadb_conn:
         with mariadb_conn.cursor() as cursor:
             cursor.execute("""
-            SELECT page_title, rd_title, rd_fragment
-            FROM page INNER JOIN redirect ON page.page_id = redirect.rd_from
-            WHERE rd_namespace = 0 AND page_namespace = 0 AND rd_interwiki = ''
+            SELECT rd_from, rd_title, rd_fragment
+            FROM redirect
+            WHERE rd_namespace = 0 AND rd_interwiki = ''
             """)
             sqlite_conn.executemany(
                 "INSERT INTO redirect VALUES(?, ?, ?)",
                 (
                     (
-                        page_title.decode("utf-8").replace("_", " "),
+                        from_id,
                         rd_title.decode("utf-8").replace("_", " "),
                         rd_fragment.decode("utf-8").replace(" ", "_"),
                     )
-                    for page_title, rd_title, rd_fragment in cursor
+                    for from_id, rd_title, rd_fragment in cursor
                 ),
             )
 
-    sqlite_conn.executescript("""
-    CREATE INDEX target_idx ON redirect (target);
-    PRAGMA optimize;
-    """)
+    sqlite_conn.execute("PRAGMA optimize")
     sqlite_conn.commit()
     sqlite_conn.close()
     zst_path = db_path.with_suffix(db_path.suffix + ".zst")

@@ -16,7 +16,11 @@ def compress_parsoid_chunk(identifier: str, chunk_num: int):
         for line in f_in:
             data = json.loads(line)
             json.dump(
-                {"name": data["name"], "html": data["article_body"]["html"]},
+                {
+                    "name": data["name"],
+                    "html": data["article_body"]["html"],
+                    "id": data["identifier"],
+                },
                 f_out,
                 ensure_ascii=False,
                 separators=(",", ":"),

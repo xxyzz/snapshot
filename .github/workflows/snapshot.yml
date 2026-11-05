@@ -82,6 +82,9 @@ jobs:
 
       - run: |
           sudo apt update
+          sudo apt purge mysql-server
+          sudo apt autoremove
+          curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --skip-maxscale
           sudo apt install mariadb-client
 
       - run: python -m pip install .
