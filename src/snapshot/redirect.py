@@ -78,24 +78,26 @@ def create_redirect_db(edition: str):
             stdin=f,
         )
     sql_path.unlink()
-    with mariadb.connect("mariadb://root:password@127.0.0.1:3306/main") as mariadb_conn:
-        with mariadb_conn.cursor() as cursor:
-            cursor.execute("""
-            SELECT rd_from, rd_title, rd_fragment
-            FROM redirect
-            WHERE rd_namespace = 0 AND rd_interwiki = ''
-            """)
-            sqlite_conn.executemany(
-                "INSERT INTO redirect VALUES(?, ?, ?)",
+    with (
+        mariadb.connect("mariadb://root:password@127.0.0.1:3306/main") as mariadb_conn,
+        mariadb_conn.cursor() as cursor,
+    ):
+        cursor.execute("""
+        SELECT rd_from, rd_title, rd_fragment
+        FROM redirect
+        WHERE rd_namespace = 0 AND rd_interwiki = ''
+        """)
+        sqlite_conn.executemany(
+            "INSERT INTO redirect VALUES(?, ?, ?)",
+            (
                 (
-                    (
-                        from_id,
-                        rd_title.decode("utf-8").replace("_", " "),
-                        rd_fragment.decode("utf-8").replace(" ", "_"),
-                    )
-                    for from_id, rd_title, rd_fragment in cursor
-                ),
-            )
+                    from_id,
+                    rd_title.decode("utf-8").replace("_", " "),
+                    rd_fragment.decode("utf-8").replace(" ", "_"),
+                )
+                for from_id, rd_title, rd_fragment in cursor
+            ),
+        )
 
     sqlite_conn.execute("PRAGMA optimize")
     sqlite_conn.commit()

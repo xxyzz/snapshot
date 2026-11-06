@@ -1,6 +1,10 @@
 from pathlib import Path
 
 
+class APIException(Exception):
+    pass
+
+
 def get_access_token(check_token: bool) -> str:
     import os
 
@@ -18,7 +22,7 @@ def get_access_token(check_token: bool) -> str:
             if r.text == "Jwt is expired":
                 token = refresh_token()
             else:
-                raise Exception(
+                raise APIException(
                     f"Invalid token: {r.status_code=} {r.reason=} {r.text=}"
                 )
     return token
@@ -44,7 +48,7 @@ def get_access_token_from_api() -> str:
         )
         return access_token
     else:
-        raise Exception(f"Get token failed: {r.status_code=} {r.reason=} {r.text=}")
+        raise APIException(f"Get token failed: {r.status_code=} {r.reason=} {r.text=}")
 
 
 def refresh_token() -> str:
@@ -95,7 +99,9 @@ def get_snapshot_info(access_token: str, identifier: str) -> dict:
                 json.dump(all_data, f, ensure_ascii=False, separators=(",", ":"))
             return all_data[identifier]
         else:
-            raise Exception(f"Get info failed: {r.status_code=} {r.reason=} {r.text=}")
+            raise APIException(
+                f"Get info failed: {r.status_code=} {r.reason=} {r.text=}"
+            )
     else:
         with json_path.open() as f:
             return json.load(f)[identifier]
@@ -127,7 +133,7 @@ def download_chunk(snapshot_id: str, chunk_id: str) -> Path:
         stream=True,
     )
     if not r.ok:
-        raise Exception(
+        raise APIException(
             f"Download chunk failed: {r.status_code=} {r.reason=} {r.text=}"
         )
     chunk_tar_path = get_chunk_tar_path(chunk_id)
@@ -214,7 +220,7 @@ def check_update(args):
     from .edition import EDITIONS
 
     token = get_access_token(True)
-    if any(edition_has_update(edition, token) for edition in EDITIONS.keys()):
+    if any(edition_has_update(edition, token) for edition in EDITIONS):
         print("true")
     else:
         print("false")

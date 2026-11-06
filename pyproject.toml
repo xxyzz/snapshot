@@ -23,14 +23,6 @@ dev = ["ruff"]
 [project.scripts]
 sp = "snapshot.main:main"
 
-[tool.ruff.lint]
-select = [
-    "E", # pycodestyle error
-    "F", # Pyflakes
-    "I", # isort
-    "W", # pycodestyle warning
-]
-
 [tool.typos]
 type.json.check-file = false
 default.extend-words = {"tha" = "tha"}
