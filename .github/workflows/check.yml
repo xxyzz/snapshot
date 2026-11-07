@@ -19,10 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-python@v7.1.0
       - run: |
-          python -m pip install -U pip
-          python -m pip install .
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv python install
 
       - name: Get date
         id: get-date
@@ -35,7 +34,7 @@ jobs:
             steps.get-date.outputs.date
           }}" > build/tag
 
-      - run: echo "$(sp check)" > build/check_result
+      - run: echo "$(uv run --locked sp check)" > build/check_result
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}

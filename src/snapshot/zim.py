@@ -7,7 +7,7 @@ from libzim.writer import Item
 def get_user_agent() -> str:
     from importlib.metadata import version
 
-    return f"snapshot/{version('sp')} (https://github.com/xxyzz/snapshot)"
+    return f"snapshot/{version('snapshot')} (https://github.com/xxyzz/snapshot)"
 
 
 def get_last_release_zim_date(edition: str) -> datetime | None:
