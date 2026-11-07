@@ -64,7 +64,6 @@ jobs:
           - 3306:3306
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-python@v7.1.0
       - uses: actions/download-artifact@v8.0.2
         with:
           path: build
@@ -86,10 +85,11 @@ jobs:
           sudo apt autoremove
           curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --skip-maxscale
           sudo apt install mariadb-client
-          python -m pip install -U pip
 
-      - run: python -m pip install .
-      - run: sp build ${{ matrix.edition }}
+      - run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv python install
+      - run: uv run sp build ${{ matrix.edition }}
         env:
           ACCESSTOKEN: ${{ secrets.ACCESSTOKEN }}
 
