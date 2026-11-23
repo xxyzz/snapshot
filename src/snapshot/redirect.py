@@ -37,8 +37,8 @@ def init_redirect_db(edition: str) -> tuple[Path, Connection]:
         db_path.unlink()
     conn = sqlite3.connect(db_path)
     conn.executescript("""
-    PRAGMA journal_mode=WAL;
-
+    PRAGMA journal_mode = WAL;
+    PRAGMA synchronous = NORMAL;
     CREATE TABLE redirect (
       from_id  INTEGER,
       title    TEXT,
